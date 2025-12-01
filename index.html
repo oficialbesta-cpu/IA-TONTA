@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Minha IA - Google Gemini</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  background:#0d1117;
+  color:white;
+  font-family:Arial;
+  padding:20px;
+}
+.container{
+  max-width:600px;
+  margin:auto;
+}
+input, textarea{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:6px;
+  border:none;
+  background:#161b22;
+  color:white;
+}
+button{
+  padding:10px;
+  width:100%;
+  background:#238636;
+  color:white;
+  border:none;
+  margin-top:10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:16px;
+}
+.chat-box{
+  background:#161b22;
+  height:350px;
+  overflow-y:scroll;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+.msg{
+  background:#1f2937;
+  padding:10px;
+  margin:10px 0;
+  border-radius:6px;
+  position:relative;
+}
+.copy-btn{
+  position:absolute;
+  right:10px;
+  top:10px;
+  background:#30363d;
+  border:none;
+  color:white;
+  padding:5px 8px;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:12px;
+}
+.label{
+  font-size:14px;
+  margin-top:12px;
+}
+</style>
+
+</head>
+<body>
+<div class="container">
+
+<h2>🔮 Minha IA com Google Gemini</h2>
+
+<label class="label">🔥 Coloque sua API Key do Google:</label>
+<input type="text" id="apiKey" placeholder="Digite sua API KEY aqui">
+
+<label class="label">⚙️ Prompt da IA:</label>
+<textarea id="systemPrompt" rows="3" placeholder="Ex: Você é uma IA educada..."></textarea>
+
+<label class="label">💬 Sua mensagem:</label>
+<input type="text" id="userMsg" placeholder="Digite sua mensagem...">
+
+<button onclick="enviarMensagem()">Enviar</button>
+
+<div class="chat-box" id="chat"></div>
+
+</div>
+
+<script>
+async function enviarMensagem(){
+  const key = document.getElementById("apiKey").value.trim();
+  const prompt = document.getElementById("systemPrompt").value.trim();
+  const msg = document.getElementById("userMsg").value.trim();
+  const chat = document.getElementById("chat");
+
+  if(!key) return alert("Coloque sua API KEY antes!");
+  if(!msg) return;
+
+  addMensagem("Você: " + msg);
+
+  document.getElementById("userMsg").value = "";
+
+  // Enviar para Google Gemini
+  const body = {
+    "contents":[
+      {"role":"user","parts":[{"text": prompt + "\n\nUsuário: " + msg}]}
+    ]
+  };
+
+  const req = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key,
+    {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)
+    }
+  );
+
+  const res = await req.json();
+
+  const resposta = res?.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na IA";
+
+  addMensagemIA(resposta);
+}
+
+// Adicionar mensagem simples
+function addMensagem(txt){
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerText = txt;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Adicionar mensagem da IA com botão copiar
+function addMensagemIA(text){
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerText = "IA: " + text;
+
+  const btn = document.createElement("button");
+  btn.className = "copy-btn";
+  btn.innerText = "Copiar";
+  btn.onclick = () => {
+    navigator.clipboard.writeText(text);
+    btn.innerText = "Copiado!";
+    setTimeout(()=>btn.innerText="Copiar", 1500);
+  };
+
+  div.appendChild(btn);
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+  </html>
